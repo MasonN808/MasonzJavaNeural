@@ -28,6 +28,7 @@ import org.encog.ml.ea.genome.Genome;
 import org.encog.ml.ea.opp.EvolutionaryOperator;
 import org.encog.ml.ea.train.EvolutionaryAlgorithm;
 import org.encog.ml.genetic.genome.DoubleArrayGenome;
+
 import java.util.Random;
 
 /**

@@ -1,5 +1,6 @@
 package neural.mlp;
 
+import neural.util.EncogHelper;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
 import org.encog.ml.data.MLDataSet;
@@ -8,7 +9,7 @@ import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
-import neural.util.EncogHelper;
+
 import static neural.util.EncogHelper.*;
 
 /**

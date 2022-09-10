@@ -23,9 +23,6 @@
  */
 package neural.market;
 
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-
 import org.encog.ml.data.market.TickerSymbol;
 
 /**

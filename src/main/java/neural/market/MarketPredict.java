@@ -23,9 +23,9 @@
  */
 package neural.market;
 
-import java.io.File;
-
 import org.encog.Encog;
+
+import java.io.File;
 
 
 

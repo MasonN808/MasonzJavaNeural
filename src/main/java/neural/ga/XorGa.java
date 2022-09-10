@@ -31,7 +31,9 @@ import org.encog.ml.ea.train.basic.TrainEA;
 import org.encog.ml.genetic.crossover.Splice;
 import org.encog.ml.genetic.genome.DoubleArrayGenome;
 import org.encog.ml.genetic.genome.DoubleArrayGenomeFactory;
+
 import java.util.Random;
+
 import static neural.util.EncogHelper.asString;
 
 

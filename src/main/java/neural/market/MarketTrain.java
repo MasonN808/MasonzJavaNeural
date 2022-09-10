@@ -23,14 +23,13 @@
  */
 package neural.market;
 
-import java.io.File;
-
 import org.encog.Encog;
 import org.encog.ml.data.MLDataSet;
 import org.encog.neural.networks.BasicNetwork;
-import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.simple.EncogUtility;
+
+import java.io.File;
 
 /**
  * Load the training data from an Encog file, produced during the

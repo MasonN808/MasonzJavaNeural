@@ -23,8 +23,6 @@
  */
 package neural.sunspot;
 
-import java.text.NumberFormat;
-
 import org.encog.engine.network.activation.ActivationSigmoid;
 import org.encog.ml.data.MLData;
 import org.encog.ml.data.MLDataSet;
@@ -36,6 +34,8 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 import org.encog.neural.pattern.ElmanPattern;
 import org.encog.util.EngineArray;
 import org.encog.util.arrayutil.NormalizeArray;
+
+import java.text.NumberFormat;
 
 
 public class PredictSunspotElman {

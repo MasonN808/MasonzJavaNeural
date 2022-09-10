@@ -23,10 +23,6 @@
  */
 package neural.sunspot;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.encog.Encog;
 import org.encog.bot.BotUtil;
 import org.encog.ml.MLMethod;
@@ -46,6 +42,10 @@ import org.encog.util.arrayutil.NormalizationAction;
 import org.encog.util.arrayutil.NormalizedField;
 import org.encog.util.csv.ReadCSV;
 import org.encog.util.simple.EncogUtility;
+
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /**
  * This example is meant to demonstrate how to use the Encog TemporalMLDataSet through the

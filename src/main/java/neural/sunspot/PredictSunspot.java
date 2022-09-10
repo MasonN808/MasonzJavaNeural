@@ -23,8 +23,6 @@
  */
 package neural.sunspot;
 
-import java.text.NumberFormat;
-
 import org.encog.ml.data.MLData;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLData;
@@ -37,6 +35,8 @@ import org.encog.neural.networks.training.Train;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 import org.encog.util.EngineArray;
 import org.encog.util.arrayutil.NormalizeArray;
+
+import java.text.NumberFormat;
 
 
 public class PredictSunspot {
