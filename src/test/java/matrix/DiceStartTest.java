@@ -52,6 +52,11 @@ public class DiceStartTest {
             {4, 5}
     };
 
+    final double[][] EXPECTED_MATRIX_4 = {
+            {1},
+            {4}
+    };
+
 
 
     /**
@@ -132,6 +137,44 @@ public class DiceStartTest {
         });
 
         mop.print(this.getClass().getName()+" dice, slice",dice);
+    }
+
+    @Test
+    public void test_4() {
+        final double[][] dice = mop.dice(mop.slice(TEST_MATRIX_0,0,2), 0, 2);
+
+        int numRows = dice.length;
+        assert(numRows == EXPECTED_MATRIX_3.length);
+
+        int numCols = dice[0].length;
+        assert(numCols == EXPECTED_MATRIX_3[0].length);
+
+        IntStream.range(0,numRows).forEach( rowno -> {
+            IntStream.range(0,numCols).forEach(colno -> {
+                assert(dice[rowno][colno] == EXPECTED_MATRIX_3[rowno][colno]);
+            });
+        });
+
+        mop.print(this.getClass().getName()+" slice, dice",dice);
+    }
+
+    @Test
+    public void test_5() {
+        final double[][] dice = mop.dice(mop.slice(mop.dice(TEST_MATRIX_0,0,2), 0, 2), 0 ,1);
+
+        int numRows = dice.length;
+        assert(numRows == EXPECTED_MATRIX_4.length);
+
+        int numCols = dice[0].length;
+        assert(numCols == EXPECTED_MATRIX_4[0].length);
+
+        IntStream.range(0,numRows).forEach( rowno -> {
+            IntStream.range(0,numCols).forEach(colno -> {
+                assert(dice[rowno][colno] == EXPECTED_MATRIX_4[rowno][colno]);
+            });
+        });
+
+        mop.print(this.getClass().getName()+" slice, dice",dice);
     }
 
 }

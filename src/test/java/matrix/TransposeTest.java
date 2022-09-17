@@ -27,7 +27,6 @@ public class TransposeTest {
             {13, 14, 15}
     };
 
-    // Singleton Matrix
     final double[][] TEST_MATRIX_1 = {
             { 1, 2, 3, 4, 5}
     };
