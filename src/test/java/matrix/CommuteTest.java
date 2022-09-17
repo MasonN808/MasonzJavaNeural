@@ -33,4 +33,37 @@ public class CommuteTest {
 
         assert(sliceTranspose.length != transposeSlice.length);
     }
+
+    @Test
+    public void test_1() {
+        double[][] sliceTranspose = mop.transpose(mop.dice(TEST_MATRIX_0,0,2));
+        mop.print(this.getClass().getName()+" dice, transpose",sliceTranspose);
+
+        double[][] transposeSlice = mop.dice(mop.transpose(TEST_MATRIX_0),0,2);
+        mop.print(this.getClass().getName()+" dice, transpose",transposeSlice);
+
+        assert(sliceTranspose.length != transposeSlice.length);
+    }
+
+    @Test
+    public void test_2() {
+        double[][] sliceTranspose = mop.transpose(mop.transpose(mop.slice(TEST_MATRIX_0,0,2)));
+        mop.print(this.getClass().getName()+" slice, transpose, transpose",sliceTranspose);
+
+        double[][] transposeSlice = mop.slice(mop.transpose(mop.transpose(TEST_MATRIX_0)),0,2);
+        mop.print(this.getClass().getName()+" slice, transpose, transpose",transposeSlice);
+
+        assert(sliceTranspose.length == transposeSlice.length);
+    }
+
+    @Test
+    public void test_3() {
+        double[][] sliceTranspose = mop.transpose(mop.transpose(mop.dice(TEST_MATRIX_0,0,2)));
+        mop.print(this.getClass().getName()+" slice, transpose, transpose",sliceTranspose);
+
+        double[][] transposeSlice = mop.dice(mop.transpose(mop.transpose(TEST_MATRIX_0)),0,2);
+        mop.print(this.getClass().getName()+" slice, transpose, transpose",transposeSlice);
+
+        assert(sliceTranspose.length == transposeSlice.length);
+    }
 }

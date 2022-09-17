@@ -13,7 +13,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         SliceStartTest.class,
         CommuteTest.class,
-        TransposeTest.class
+        TransposeTest.class,
+        DiceStartTest.class
 })
 
 public class MopSuite {}

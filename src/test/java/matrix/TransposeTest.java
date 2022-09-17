@@ -113,4 +113,22 @@ public class TransposeTest {
 
         mop.print(this.getClass().getName()+" transpose",transpose);
     }
+    @Test
+    public void test_3() {
+        final double[][] transpose = mop.transpose(mop.transpose(TEST_MATRIX_0));
+
+        int numRows = transpose.length;
+        assert(numRows == TEST_MATRIX_0.length);
+
+        int numCols = transpose[0].length;
+        assert(numCols == TEST_MATRIX_0[0].length);
+
+        IntStream.range(0,numRows).forEach( rowno -> {
+            IntStream.range(0,numCols).forEach(colno -> {
+                assert(transpose[rowno][colno] == TEST_MATRIX_0[rowno][colno]);
+            });
+        });
+
+        mop.print(this.getClass().getName()+" transpose, transpose",transpose);
+    }
 }

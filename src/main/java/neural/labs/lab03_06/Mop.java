@@ -37,19 +37,9 @@ public class Mop implements IMop {
     @Override
     public double[][] dice(double[][] src, int startCol, int endCol) {
 
-        double[][] src_copy = new double[src.length][src[0].length];
-
         double[][] transposed_src = transpose(src);
 
-        for (int i=startCol; i<endCol; i++){
-            // Make a copy of the current row and append to new matrix
-            System.arraycopy(src_copy[i], 0, transposed_src[i], 0, src[0].length);
-        }
-
-        // Transpose again to get back to offset the first transpose
-        src_copy = transpose(src_copy);
-
-        return src_copy;
+        return transpose(slice(transposed_src, startCol, endCol));
     }
 
     @Override
