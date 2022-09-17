@@ -11,11 +11,13 @@
  */
 package matrix;
 
+import neural.labs.lab03_06.Mop;
 import neural.matrix.IMop;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
@@ -26,7 +28,7 @@ import java.util.stream.IntStream;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SliceStartTest {
     // TODO: instantiate a concrete IMop here
-    IMop mop = null;
+    IMop mop = new Mop();
 
     // Matrix is this size to anticipate start, mid, end testing.
     final double[][] TEST_MATRIX = {
@@ -38,8 +40,8 @@ public class SliceStartTest {
     };
 
     final double[][] EXPECTED_MATRIX = {
-            { 1,  2, 3},
-            { 4,  5, 6}
+            { 1, 2, 3},
+            { 4, 5, 6}
     };
 
     /**

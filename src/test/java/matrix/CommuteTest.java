@@ -1,5 +1,6 @@
 package matrix;
 
+import neural.labs.lab03_06.Mop;
 import neural.matrix.IMop;
 import org.junit.Test;
 
@@ -9,7 +10,7 @@ import org.junit.Test;
  */
 public class CommuteTest {
     // TODO: instantiate a concrete IMop here
-    IMop mop = null;
+    IMop mop = new Mop();
 
     final double[][] TEST_MATRIX = {
             { 1,  2,  3},
