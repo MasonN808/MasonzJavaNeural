@@ -54,6 +54,15 @@ public class Mop implements IMop {
 
     @Override
     public void print(String msg, double[][] src) {
-
+        System.out.println("-----------------------------------");
+        System.out.println(msg);
+        for (int row_index=0; row_index<src.length; row_index++){
+            // Print the next row
+            System.out.println();
+            for (int col_index=0; col_index<src[0].length; col_index++){
+                System.out.print(src[row_index][col_index] + " ");
+            }
+        }
+        System.out.println();
     }
 }
