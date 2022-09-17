@@ -12,7 +12,7 @@ public class CommuteTest {
     // TODO: instantiate a concrete IMop here
     IMop mop = new Mop();
 
-    final double[][] TEST_MATRIX = {
+    final double[][] TEST_MATRIX_0 = {
             { 1,  2,  3},
             { 4,  5,  6},
             { 7,  8,  9},
@@ -24,11 +24,11 @@ public class CommuteTest {
      * Tests transpose meets minimal expectations.
      */
     @Test
-    public void test() {
-        double[][] sliceTranspose = mop.transpose(mop.slice(TEST_MATRIX,0,2));
+    public void test_0() {
+        double[][] sliceTranspose = mop.transpose(mop.slice(TEST_MATRIX_0,0,2));
         mop.print(this.getClass().getName()+" slice, transpose",sliceTranspose);
 
-        double[][] transposeSlice = mop.slice(mop.transpose(TEST_MATRIX),0,2);
+        double[][] transposeSlice = mop.slice(mop.transpose(TEST_MATRIX_0),0,2);
         mop.print(this.getClass().getName()+" slice, transpose",transposeSlice);
 
         assert(sliceTranspose.length != transposeSlice.length);
