@@ -174,7 +174,7 @@ public class DiceStartTest {
             });
         });
 
-        mop.print(this.getClass().getName()+" slice, dice",dice);
+        mop.print(this.getClass().getName()+" dice, slice, dice",dice);
     }
 
 }

@@ -59,10 +59,10 @@ public class CommuteTest {
     @Test
     public void test_3() {
         double[][] sliceTranspose = mop.transpose(mop.transpose(mop.dice(TEST_MATRIX_0,0,2)));
-        mop.print(this.getClass().getName()+" slice, transpose, transpose",sliceTranspose);
+        mop.print(this.getClass().getName()+" dice, transpose, transpose",sliceTranspose);
 
         double[][] transposeSlice = mop.dice(mop.transpose(mop.transpose(TEST_MATRIX_0)),0,2);
-        mop.print(this.getClass().getName()+" slice, transpose, transpose",transposeSlice);
+        mop.print(this.getClass().getName()+" dice, transpose, transpose",transposeSlice);
 
         assert(sliceTranspose.length == transposeSlice.length);
     }
