@@ -6,6 +6,7 @@ import neural.util.IrisHelper;
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
+import org.encog.mathutil.Equilateral;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.ml.train.BasicTraining;
@@ -49,11 +50,23 @@ public class MasonzIris {
     public final static double LEARNING_MOMENTUM = 0.25;
     final static double NORMALIZED_HI = 1;
     final static double NORMALIZED_LO = -1;
+
+    static final Equilateral eq =
+            new Equilateral(IrisHelper.species2Cat.size(),
+                    NORMALIZED_HI,
+                    NORMALIZED_LO);
+
     final static Map<Integer, NormalizedField> normalizers =
+            new HashMap<>();
+
+    final static Map<Integer, double[]> encoded_arrays =
             new HashMap<>();
 
     public static double TRAINING_INPUTS[][];
     public static double TESTING_INPUTS[][];
+
+    public static double TRAINING_IDEALS[][];
+    public static double TESTING_IDEALS[][];
 
     public static double[][] normalize(double[][] src) {
         Mop mop = new Mop();
@@ -77,6 +90,22 @@ public class MasonzIris {
         return src;
     }
 
+    public static double[][] encode(double[][] src) {
+        // TODO fix the +1 to length; very hacky
+        double[][] encoded_matrix = new double[src.length][src[0].length+1];
+        for (int row_index = 0; row_index < src.length; row_index++) {
+            // Convert the double to an int for categorization
+            int element = (int) src[row_index][0];
+            double[] encoded_array = eq.encode(element);
+            encoded_matrix[row_index][0] = encoded_array[0];
+            encoded_matrix[row_index][1] = encoded_array[1];
+
+            // Put into hashtable when we decode
+            encoded_arrays.put(row_index, encoded_array);
+        }
+        return encoded_matrix;
+    }
+
     public static void init() {
         IMop mop = new Mop();
         double[][] observations = IrisHelper.load("data/iris.csv");
@@ -90,39 +119,89 @@ public class MasonzIris {
         TRAINING_INPUTS = mop.slice(inputs,1,120);
         TESTING_INPUTS = mop.slice(inputs,120,150);
 
-        report("training", TRAINING_INPUTS);
-        report("testing",TESTING_INPUTS);
+        // This is a column of doubles
+        observations_ = mop.dice(mop.transpose(observations),4,5);
+
+        double[][] outputs = encode(observations_);
+
+
+
+        TRAINING_IDEALS = mop.slice(outputs,1,120);
+        mop.print("TEST", TRAINING_IDEALS);
+        TESTING_IDEALS = mop.slice(outputs,120,150);
+
+//        report("training", TRAINING_INPUTS, "inputs");
+        report("training",TRAINING_IDEALS, "outputs");
+//        report("testing",TESTING_INPUTS, "inputs");
     }
 
-    public static void report(String input_type, double[][] inputs) {
-        System.out.println("--- " + input_type + " inputs");
-        for (int id = 0; id < normalizers.size(); id++) {
-            if (id == 0){
-                System.out.println("SL: " + normalizers.get(0).getActualLow()  + " - " + normalizers.get(0).getActualHigh());
+    public static void report(String input_type, double[][] inputs, String input_string) {
+        if (input_string.equals("inputs")) {
+            System.out.println("--- " + input_type + " inputs");
+            for (int id = 0; id < normalizers.size(); id++) {
+                if (id == 0) {
+                    System.out.println("SL: " + normalizers.get(0).getActualLow() + " - " + normalizers.get(0).getActualHigh());
+                } else if (id == 1) {
+                    System.out.println("SW: " + normalizers.get(1).getActualLow() + " - " + normalizers.get(1).getActualHigh());
+                } else if (id == 2) {
+                    System.out.println("PL: " + normalizers.get(2).getActualLow() + " - " + normalizers.get(2).getActualHigh());
+                } else {
+                    System.out.println("PW: " + normalizers.get(3).getActualLow() + " - " + normalizers.get(3).getActualHigh());
+                }
             }
-            else if (id == 1){
-                System.out.println("SW: " + normalizers.get(1).getActualLow()  + " - " + normalizers.get(1).getActualHigh());
-            }
-            else if (id == 2){
-                System.out.println("PL: " + normalizers.get(2).getActualLow()  + " - " + normalizers.get(2).getActualHigh());
-            }
-            else{
-                System.out.println("PW: " + normalizers.get(3).getActualLow()  + " - " + normalizers.get(3).getActualHigh());
+
+            DecimalFormat f = new DecimalFormat("##.00");
+            System.out.println("#  |" + String.format("%-14s|", "SL") + String.format("%-14s|", "SW") +
+                    String.format("%-14s|", "PL") + String.format("%-14s|", "PW"));
+
+            for (int row_index = 0; row_index < inputs.length; row_index++) {
+                System.out.print(String.format("%-3s|", row_index));
+                for (int column_index = 0; column_index < inputs[0].length; column_index++) {
+                    System.out.print(String.format("%-14s|", f.format(normalizers.get(column_index).deNormalize(inputs[row_index][column_index])) + " -> "
+                            + f.format(inputs[row_index][column_index])));
+                }
+                System.out.println();
             }
         }
 
-        DecimalFormat f = new DecimalFormat("##.00");
-        System.out.println("#  |" + String.format("%-14s|", "SL") + String.format("%-14s|",  "SW") +
-                String.format("%-14s|",  "PL") + String.format("%-14s|",  "PW"));
-
-        for (int row_index = 0; row_index < inputs.length; row_index++) {
-            System.out.print(String.format("%-3s|",  row_index));
-            for (int column_index = 0; column_index < inputs[0].length; column_index++) {
-                System.out.print(String.format("%-14s|", f.format(normalizers.get(column_index).deNormalize(inputs[row_index][column_index])) + " -> "
-                        + f.format(inputs[row_index][column_index])));
+        else if (input_string.equals("outputs")){
+            System.out.println("--- " + input_type + " outputs");
+            System.out.print("#   ");
+            for (int id = 1; id < inputs[0].length+1; id++) {
+                System.out.print(String.format("%-8s", "t" + id));
             }
+
+            System.out.print(String.format("%-8s", "decoding"));
             System.out.println();
+
+            DecimalFormat f = new DecimalFormat("#0.0000");
+
+            for (int row_index = 0; row_index < inputs.length; row_index++) {
+                System.out.print(String.format("%-4s", row_index));
+
+//                for (int column_index = 0; column_index < inputs[0].length; column_index++) {
+//                    System.out.print(String.format("%-8s", f.format(inputs[row_index][column_index])));
+//                }
+                for (int column_index = 0; column_index < inputs[0].length; column_index++) {
+                    System.out.print(String.format("%-8s", f.format(encoded_arrays.get(row_index)[column_index])));
+                }
+
+                int decoded_int = eq.decode(encoded_arrays.get(row_index));
+                System.out.print(" " + decoded_int);
+
+                switch (decoded_int) {
+                    case (0) -> System.out.print(" -> setosa");
+                    case (1) -> System.out.print(" -> verginica");
+                    case (2) -> System.out.print(" -> versicolor");
+                }
+                System.out.println();
+            }
         }
+
+        else {
+            System.out.println("Invalid input_string");
+        }
+
     }
 
     /**
