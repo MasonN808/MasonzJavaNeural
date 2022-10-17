@@ -6,12 +6,16 @@ import neural.util.IrisHelper;
 import org.apache.commons.math3.stat.StatUtils;
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
+import org.encog.engine.network.activation.ActivationTANH;
 import org.encog.mathutil.Equilateral;
+import org.encog.ml.data.MLData;
+import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
+import org.encog.neural.networks.training.propagation.back.Backpropagation;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
 import org.encog.util.arrayutil.NormalizedField;
 import org.encog.util.arrayutil.NormalizationAction;
@@ -23,23 +27,9 @@ import java.util.Map;
 
 import static neural.util.EncogHelper.*;
 
-/**
- * XOR: This example is essentially the "Hello World" of neural network
- * programming. This example shows how to construct an Encog neural network to
- * predict the report from the XOR operator. This example uses backpropagation
- * to train the neural network.
- *
- * This example attempts to use a minimum of Encog values to create and train
- * the neural network. This allows you to see exactly what is going on. For a
- * more advanced example, that uses Encog factories, refer to the XORFactory
- * example.
- *
- * The original version of this code does not appear to converge. I fixed this
- * problem by using two neurons in the hidden layer and instead of ramped activation,
- * sigmoid activation. This makes the network reflect the model in figure 1.1
- * in the book, d. 11. I also added more comments to make the code more explanatory.
- * @author Ron Coleman
- * @date 24 Oct 2017
+/*
+ * @author Mason Nakamura and Jonathan Murphy
+ * @date 01 Oct 2022
  */
 public class MasonzIris {
     /**
@@ -64,7 +54,6 @@ public class MasonzIris {
 
     public static double TRAINING_INPUTS[][];
     public static double TESTING_INPUTS[][];
-
     public static double TRAINING_IDEALS[][];
     public static double TESTING_IDEALS[][];
 
@@ -93,15 +82,17 @@ public class MasonzIris {
     public static double[][] encode(double[][] src) {
         // TODO fix the +1 to length; very hacky
         double[][] encoded_matrix = new double[src.length][src[0].length+1];
-        for (int row_index = 0; row_index < src.length; row_index++) {
-            // Convert the double to an int for categorization
-            int element = (int) src[row_index][0];
-            double[] encoded_array = eq.encode(element);
-            encoded_matrix[row_index][0] = encoded_array[0];
-            encoded_matrix[row_index][1] = encoded_array[1];
+        for (int column_index = 0; column_index < src[0].length; column_index++) {
+            for (int row_index = 0; row_index < src.length; row_index++) {
+                // Convert the double to an int for categorization
+                int element = (int) src[row_index][column_index];
+                double[] encoded_array = eq.encode(element);
+                encoded_matrix[row_index][column_index] = encoded_array[0];
+                encoded_matrix[row_index][column_index+1] = encoded_array[1];
 
-            // Put into hashtable when we decode
-            encoded_arrays.put(row_index, encoded_array);
+                // Put into hashtable when we decode
+                encoded_arrays.put(row_index, encoded_array);
+            }
         }
         return encoded_matrix;
     }
@@ -124,15 +115,10 @@ public class MasonzIris {
 
         double[][] outputs = encode(observations_);
 
-
-
         TRAINING_IDEALS = mop.slice(outputs,1,120);
-        mop.print("TEST", TRAINING_IDEALS);
         TESTING_IDEALS = mop.slice(outputs,120,150);
 
-//        report("training", TRAINING_INPUTS, "inputs");
         report("training",TRAINING_IDEALS, "outputs");
-//        report("testing",TESTING_INPUTS, "inputs");
     }
 
     public static void report(String input_type, double[][] inputs, String input_string) {
@@ -179,9 +165,6 @@ public class MasonzIris {
             for (int row_index = 0; row_index < inputs.length; row_index++) {
                 System.out.print(String.format("%-4s", row_index));
 
-//                for (int column_index = 0; column_index < inputs[0].length; column_index++) {
-//                    System.out.print(String.format("%-8s", f.format(inputs[row_index][column_index])));
-//                }
                 for (int column_index = 0; column_index < inputs[0].length; column_index++) {
                     System.out.print(String.format("%-8s", f.format(encoded_arrays.get(row_index)[column_index])));
                 }
@@ -191,11 +174,17 @@ public class MasonzIris {
 
                 switch (decoded_int) {
                     case (0) -> System.out.print(" -> setosa");
-                    case (1) -> System.out.print(" -> verginica");
+                    case (1) -> System.out.print(" -> virginica");
                     case (2) -> System.out.print(" -> versicolor");
                 }
                 System.out.println();
             }
+        }
+
+        else if (input_string.equals("network results")){
+            System.out.println("Network Results:");
+            System.out.println("#   " + String.format("%-8s", "Ideal") + String.format("%-8s", "Actual"));
+
         }
 
         else {
@@ -204,6 +193,52 @@ public class MasonzIris {
 
     }
 
+    public static void network_report(MLDataSet testingSet, BasicNetwork network){
+        System.out.println("Network results:");
+
+        System.out.println(String.format("%4s","#") + String.format("%13s", "Ideal") + String.format("%12s", "Actual"));
+
+        // Report inputs and ideals vs. outputs.
+        int n = 1;
+        // initialize the error for misses
+        int error = 0;
+        for (MLDataPair pair : testingSet) {
+            System.out.printf("%4d ",n);
+
+            final MLData inputs = pair.getInput();
+            final MLData outputs = network.compute(inputs);
+
+            final MLData ideals = pair.getIdeal();
+            final double ideal[] = ideals.getData();
+            final double actual[] = outputs.getData();
+
+            int cat_ideal = eq.decode(ideal);
+            int cat_actual = eq.decode(actual);
+            // TODO: John can you double check that the categories are being mapped correctly?
+            // TODO: idk if our previous encoding using eq changed the categories different from the mapping
+            // TODO: Either way, the success rate benchmark should work perfectly either way
+            System.out.printf("%12s", IrisHelper.cat2Species.get(cat_ideal));
+            System.out.printf("%12s", IrisHelper.cat2Species.get(cat_actual));
+
+            // Check if the ideal and the actual are different
+            if (cat_ideal != cat_actual){
+                System.out.print(String.format("%8s","MISSED!"));
+                error += 1;
+            }
+
+            System.out.println();
+
+            n += 1;
+        }
+
+        System.out.println("...");
+        DecimalFormat f = new DecimalFormat("###.#");
+        System.out.println(String.format("success rate = " + (30-error) + "/30 " + String.format(f.format(((float)(30-error)/30) * 100) )) + "%");
+
+    }
+
+
+
     /**
      * The main method.
      * @param args No arguments are used.
@@ -211,74 +246,79 @@ public class MasonzIris {
     public static void main(final String args[]) {
         init();
 
-//        // Instantiate the network
-//        BasicNetwork network = new BasicNetwork();
-//
-//        // Input layer plus bias node
-//        network.addLayer(new BasicLayer(null, true, 2));
-//
-//        // Hidden layer plus bias node
-//        network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 2));
-//
-//        // Output layer
-//        network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 1));
-//
-//        // No more layers to be added
-//        network.getStructure().finalizeStructure();
-//
-//        // Randomize the weights
-//        network.reset();
-//
-//        EncogHelper.describe(network);
-//
-//        // Create training observations
-//        MLDataSet trainingSet = new BasicMLDataSet(TRAINING_INPUTS, TRAINING_IDEALS);
-//
-//        // Use a training object for the learning algorithm, backpropagation.
-////        final BasicTraining training = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
-//        final BasicTraining training = new ResilientPropagation(network, trainingSet);
-//
-//        // Set learning batch size: 0 = batch, 1 = online, n = batch size
-//        // See org.encog.neural.networks.training.BatchSize
-//        // train.setBatchSize(0);
-//
-//        int epoch = 0;
-//
-//        double minError = Double.MAX_VALUE;
-//
-//        double error = 0.0;
-//
-//        int sameCount = 0;
-//        final int MAX_SAME_COUNT = 5*LOG_FREQUENCY;
-//
-//        EncogHelper.log(epoch, error,false, false);
-//        do {
-//            training.iteration();
-//
-//            epoch++;
-//
-//            error = training.getError();
-//
-//            if(error < minError) {
-//                minError = error;
-//                sameCount = 1;
-//            }
-//            else
-//                sameCount++;
-//
-//            if(sameCount > MAX_SAME_COUNT)
-//                break;
-//
-//            EncogHelper.log(epoch, error,false,false);
-//
-//        } while (error > TOLERANCE && epoch < MAX_EPOCHS);
-//
-//        training.finishTraining();
-//
-//        EncogHelper.log(epoch, error,sameCount > MAX_SAME_COUNT, true);
-//        EncogHelper.report(trainingSet, network);
-//        EncogHelper.describe(network);
-//
-//        Encog.getInstance().shutdown();
+        // Instantiate the network
+        BasicNetwork network = new BasicNetwork();
+
+        // Input layer plus bias node
+        network.addLayer(new BasicLayer(null, true, 4));
+
+        // Hidden layer plus bias node
+        network.addLayer(new BasicLayer(new ActivationTANH(), true, 4));
+
+        // Output layer
+        network.addLayer(new BasicLayer(new ActivationTANH(), false, 2));
+
+        // No more layers to be added
+        network.getStructure().finalizeStructure();
+
+        // Randomize the weights
+        network.reset();
+
+        EncogHelper.describe(network);
+
+        // Create training observations
+        MLDataSet trainingSet = new BasicMLDataSet(TRAINING_INPUTS, TRAINING_IDEALS);
+
+        // Use a training object for the learning algorithm, backpropagation.
+//      final BasicTraining training = new Backpropagation(network, trainingSet,LEARNING_RATE,LEARNING_MOMENTUM);
+        final BasicTraining training = new ResilientPropagation(network, trainingSet);
+
+//      Set learning batch size: 0 = batch, 1 = online, n = batch size
+//      See org.encog.neural.networks.training.BatchSize
+//      train.setBatchSize(0);
+
+        int epoch = 0;
+
+        double minError = Double.MAX_VALUE;
+
+        double error = 0.0;
+
+        int sameCount = 0;
+        final int MAX_SAME_COUNT = 5*LOG_FREQUENCY;
+
+        EncogHelper.log(epoch, error,false, false);
+        do {
+            training.iteration();
+
+            epoch++;
+
+            error = training.getError();
+
+            if(error < minError) {
+                minError = error;
+                sameCount = 1;
+            }
+            else
+                sameCount++;
+
+            if(sameCount > MAX_SAME_COUNT)
+                break;
+
+            EncogHelper.log(epoch, error,false,false);
+
+        } while (error > TOLERANCE && epoch < MAX_EPOCHS);
+
+        training.finishTraining();
+
+        EncogHelper.log(epoch, error,sameCount > MAX_SAME_COUNT, true);
+        EncogHelper.report(trainingSet, network);
+        EncogHelper.describe(network);
+
+        // Create testing observations
+        MLDataSet testingSet = new BasicMLDataSet(TESTING_INPUTS, TESTING_IDEALS);
+        // Testing network on testing data
+//        EncogHelper.report(testingSet, network);
+        network_report(testingSet, network);
+        Encog.getInstance().shutdown();
     }
 }

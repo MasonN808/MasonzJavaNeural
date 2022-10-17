@@ -1,5 +1,7 @@
 package neural.mnist;
 
+import java.io.IOException;
+
 /**
  * Interface to load the MNIST data.
  * <p>There is one instance for each sample, ie, one for the training and one for the testing database.</p>
@@ -15,7 +17,7 @@ public interface IMLoader {
      * Gets the pixel and label data in row-major order from their respective files.
      * @return Data in row-major order.
      */
-    public MDigit[] load();
+    public MDigit[] load() throws IOException;
 
     /**
      * Gets the pixel magic number.
