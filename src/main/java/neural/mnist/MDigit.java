@@ -6,13 +6,17 @@ package neural.mnist;
 public class MDigit {
 
     int no;
-    int[] pixels;
-    int label;
+    public int[] pixels;
+    public int label;
+    public double[] normalizedPixels;
+    public double[] encodedLabel;
 
     public MDigit(int no, int[] pixels, int label) {
         this.no = no;
         this.pixels = pixels;
         this.label = label;
+        this.normalizedPixels = new double[785];
+        this.encodedLabel = new double[9];
     }
 
     @Override

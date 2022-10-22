@@ -1,4 +1,4 @@
-package neural.rnn;
+package neural.mlp.rnn;
 
 /*
  * Encog(tm) Java Examples v3.4

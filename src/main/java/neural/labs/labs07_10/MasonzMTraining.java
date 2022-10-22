@@ -1,6 +1,9 @@
-package neural.labs.lab03_06;
+package neural.labs.labs07_10;
 
+import neural.labs.lab03_06.Mop;
 import neural.matrix.IMop;
+import neural.mnist.IMLoader;
+import neural.mnist.MDigit;
 import neural.util.EncogHelper;
 import neural.util.IrisHelper;
 import org.apache.commons.math3.stat.StatUtils;
@@ -15,13 +18,14 @@ import org.encog.ml.data.basic.BasicMLDataSet;
 import org.encog.ml.train.BasicTraining;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
-import org.encog.neural.networks.training.propagation.back.Backpropagation;
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation;
-import org.encog.util.arrayutil.NormalizedField;
+import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.arrayutil.NormalizationAction;
+import org.encog.util.arrayutil.NormalizedField;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,13 +35,15 @@ import static neural.util.EncogHelper.*;
  * @author Mason Nakamura and Jonathan Murphy
  * @date 01 Oct 2022
  */
-public class MasonzIrisLab6 {
+public class MasonzMTraining {
     /**
      * These learning parameters generally give good results according to literature,
      * that is, the training algorithm converges with the tolerance below.
      * */
     public final static double LEARNING_RATE = 0.25;
     public final static double LEARNING_MOMENTUM = 0.25;
+
+    public static final int NUM_SAMPLES = 100;
     final static double NORMALIZED_HI = 1;
     final static double NORMALIZED_LO = -1;
 
@@ -98,28 +104,22 @@ public class MasonzIrisLab6 {
         return encoded_matrix;
     }
 
-    public static void init() {
-        IMop mop = new Mop();
-        double[][] observations = IrisHelper.load("data/iris.csv");
+    public static void init() throws IOException {
+        MLoader mLoader = new MLoader("/Users/masonnakamura/IdeaProjects/MasonzJavaNeural/data/train-images.idx3-ubyte",
+                "/Users/masonnakamura/IdeaProjects/MasonzJavaNeural/data/train-labels.idx1-ubyte");
 
-        // Set the column indexes to remove the id column and the target column
-        double[][] observations_ = mop.dice(mop.transpose(observations),0,4);
+        MDigit[] mList = mLoader.load();
 
-        double[][] inputs = normalize(observations_);
+        IMLoader.Normal normal = mLoader.normalize();
 
-        // Omit the first row of column labels
-        TRAINING_INPUTS = mop.slice(inputs,1,120);
-        TESTING_INPUTS = mop.slice(inputs,120,150);
 
-        // This is a column of doubles
-        observations_ = mop.dice(mop.transpose(observations),4,5);
+        Mop mop = new Mop();
 
-        double[][] outputs = encode(observations_);
+        TRAINING_INPUTS = mop.slice(normal.pixels(), 0, NUM_SAMPLES);
+        assert (TRAINING_INPUTS[0].length == (28 * 28));
 
-        TRAINING_IDEALS = mop.slice(outputs,1,120);
-        TESTING_IDEALS = mop.slice(outputs,120,150);
-
-        report("training",TRAINING_IDEALS, "outputs");
+        TRAINING_IDEALS = mop.slice(normal.labels(), 0, NUM_SAMPLES);
+        assert (TRAINING_IDEALS[0].length == (10 - 1));
     }
 
     public static void report(String input_type, double[][] inputs, String input_string) {
@@ -241,20 +241,23 @@ public class MasonzIrisLab6 {
      * The main method.
      * @param args No arguments are used.
      */
-    public static void main(final String args[]) {
+    public static void main(final String args[]) throws IOException {
         init();
 
         // Instantiate the network
         BasicNetwork network = new BasicNetwork();
 
         // Input layer plus bias node
-        network.addLayer(new BasicLayer(null, true, 4));
+        network.addLayer(new BasicLayer(null, true, 784));
 
         // Hidden layer plus bias node
-        network.addLayer(new BasicLayer(new ActivationTANH(), true, 4));
+        network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 100));
+
+        // Hidden layer plus bias node
+        network.addLayer(new BasicLayer(new ActivationSigmoid(), true, 75));
 
         // Output layer
-        network.addLayer(new BasicLayer(new ActivationTANH(), false, 2));
+        network.addLayer(new BasicLayer(new ActivationSigmoid(), false, 9));
 
         // No more layers to be added
         network.getStructure().finalizeStructure();
@@ -262,7 +265,7 @@ public class MasonzIrisLab6 {
         // Randomize the weights
         network.reset();
 
-        EncogHelper.describe(network);
+        EncogHelper.summarize(network);
 
         // Create training observations
         MLDataSet trainingSet = new BasicMLDataSet(TRAINING_INPUTS, TRAINING_IDEALS);
@@ -295,6 +298,9 @@ public class MasonzIrisLab6 {
             if(error < minError) {
                 minError = error;
                 sameCount = 1;
+                EncogDirectoryPersistence.saveObject(
+                        new File("/Users/masonnakamura/IdeaProjects/MasonzJavaNeural/src/main/java/neural/labs/labs07_10"+"/encogmnist-”+NUM_SAMPLES+”.bin"),network);
+
             }
             else
                 sameCount++;
@@ -306,17 +312,21 @@ public class MasonzIrisLab6 {
 
         } while (error > TOLERANCE && epoch < MAX_EPOCHS);
 
+        EncogDirectoryPersistence.saveObject(
+                new File("/Users/masonnakamura/IdeaProjects/MasonzJavaNeural/src/main/java/neural/labs/labs07_10"+"/encogmnist-"+ NUM_SAMPLES+ ".bin"),network);
+
+
         training.finishTraining();
 
         EncogHelper.log(epoch, error,sameCount > MAX_SAME_COUNT, true);
-        EncogHelper.report(trainingSet, network);
-        EncogHelper.describe(network);
-
-        // Create testing observations
-        MLDataSet testingSet = new BasicMLDataSet(TESTING_INPUTS, TESTING_IDEALS);
-        // Testing network on testing data
-//        EncogHelper.report(testingSet, network);
-        network_report(testingSet, network);
-        Encog.getInstance().shutdown();
+//        EncogHelper.report(trainingSet, network);
+//        EncogHelper.describe(network);
+//
+//        // Create testing observations
+//        MLDataSet testingSet = new BasicMLDataSet(TESTING_INPUTS, TESTING_IDEALS);
+//        // Testing network on testing data
+////        EncogHelper.report(testingSet, network);
+//        network_report(testingSet, network);
+//        Encog.getInstance().shutdown();
     }
 }

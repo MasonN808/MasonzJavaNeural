@@ -8,7 +8,12 @@ import java.io.IOException;
  * @author Ron.Coleman
  */
 public interface IMLoader {
-    record Normal(double[][] pixels, double[][] labels) {}
+    record Normal(double[][] pixels, double[][] labels) {
+        public Normal(double[][] pixels, double[][] labels){
+            this.pixels = pixels;
+            this.labels = labels;
+        }
+    }
     ////////////////
     // TODO: Add a constructor which takes the pixel and label paths.
     ////////////////

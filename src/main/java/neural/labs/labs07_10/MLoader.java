@@ -4,9 +4,13 @@ package neural.labs.labs07_10;
 import neural.matrix.IMop;
 import neural.mnist.IMLoader;
 import neural.mnist.MDigit;
+import neural.util.IrisHelper;
+import org.encog.mathutil.Equilateral;
 
 import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.zip.CRC32;
 
@@ -27,7 +31,11 @@ public class MLoader
     int labelMagicNumber;
     int labelNumberOfLabels;
     CRC32 crc;
-
+    MDigit[] MList;
+    static final Equilateral eq =
+            new Equilateral(10,
+                    0,
+                    1);
 
     public MLoader(String imagePath, String labelsPath) {
         this.imagePath = imagePath;
@@ -61,6 +69,8 @@ public class MLoader
         this.labelMagicNumber = labelsInputStream.readInt();
         this.labelNumberOfLabels = labelsInputStream.readInt();
 
+        this.MList = new MDigit[this.dataNumberOfItems];
+
         // Initialize size of list of MDigit relative to number of images and number of pixels of each image
         MDigit[] MList = new MDigit[dataNumberOfItems];
 
@@ -73,9 +83,9 @@ public class MLoader
                 this.crc.update(pixels[pixi]);
             }
             int label = labelsInputStream.readUnsignedByte();
-            MList[itemNumber] = new MDigit(itemNumber, pixels, label);
+            this.MList[itemNumber] = new MDigit(itemNumber, pixels, label);
         }
-        return MList;
+        return this.MList;
     }
 
     @Override
@@ -95,7 +105,26 @@ public class MLoader
 
     @Override
     public Normal normalize() {
-        return null;
+        double[][] pixels = new double[this.dataNumberOfItems][this.nRows * this.nCols];
+        double[][] labels = new double[this.dataNumberOfItems][9];
+
+        for (int itemNumber = 0; itemNumber < this.dataNumberOfItems; itemNumber++) {
+            int[] arrayPixels = this.MList[itemNumber].pixels;
+            double[] normalizedPixels = new double[this.nRows * this.nCols];
+            double[] encodedLabel;
+
+            for (int pixelIndex = 0; pixelIndex < this.nRows * this.nCols; pixelIndex++) {
+                 normalizedPixels[pixelIndex] = ((double)arrayPixels[pixelIndex])/255.0;
+            }
+
+            // Store the normalized pixels
+            pixels[itemNumber] = normalizedPixels;
+
+            // Store the encoding
+            labels[itemNumber] = eq.encode(this.MList[itemNumber].label);
+        }
+
+        return new Normal(pixels, labels);
     }
 
     public static void main(String args[]) throws IOException {
@@ -104,8 +133,9 @@ public class MLoader
 
         MDigit[] mList = mLoader.load();
 
-        System.out.print(mList.length);
-        mList[323].toString();
-        System.out.println(mLoader.getChecksum());
+        mLoader.normalize();
+        System.out.println(Arrays.toString(mList[0].pixels));
+        System.out.println(Arrays.toString(mList[0].normalizedPixels));
+        System.out.println(Arrays.toString(mList[0].encodedLabel));
     }
 }

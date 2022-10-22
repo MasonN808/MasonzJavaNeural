@@ -21,7 +21,7 @@
  * and trademarks visit:
  * http://www.heatonresearch.com/copyright
  */
-package neural.rnn;
+package neural.mlp.rnn;
 
 import org.encog.Encog;
 import org.encog.engine.network.activation.ActivationSigmoid;
