@@ -231,7 +231,6 @@ public class MasonzIrisLab6 {
         }
 
         System.out.println("...");
-        DecimalFormat f = new DecimalFormat("###.#");
         System.out.println(String.format("success rate = " + (30-error) + "/30 " + (float)(30-error)/30 + "%%"));
     }
 

@@ -43,7 +43,7 @@ public class MasonzMTraining {
     public final static double LEARNING_RATE = 0.25;
     public final static double LEARNING_MOMENTUM = 0.25;
 
-    public static final int NUM_SAMPLES = 100;
+    public static final int NUM_SAMPLES = 2000;
     final static double NORMALIZED_HI = 1;
     final static double NORMALIZED_LO = -1;
 
@@ -59,50 +59,8 @@ public class MasonzMTraining {
             new HashMap<>();
 
     public static double TRAINING_INPUTS[][];
-    public static double TESTING_INPUTS[][];
 
     public static double TRAINING_IDEALS[][];
-    public static double TESTING_IDEALS[][];
-
-    public static double[][] normalize(double[][] src) {
-        Mop mop = new Mop();
-        // Get a column
-        for (int column_index = 0; column_index < src[0].length; column_index++) {
-            // Dice, transpose, then flatten the singleton matrix
-            double[] transposed_column = mop.transpose(mop.dice(src, column_index, column_index + 1))[0];
-
-            double max = StatUtils.max(transposed_column);
-            double min = StatUtils.min(transposed_column);
-
-            NormalizedField normalizedField = new NormalizedField(NormalizationAction.Normalize, null, max, min, NORMALIZED_HI, NORMALIZED_LO);
-
-            // Put normalized field in hashtable
-            normalizers.put(column_index, normalizedField);
-
-            for (int row_index = 0; row_index < src.length; row_index++) {
-                src[row_index][column_index] = normalizedField.normalize(src[row_index][column_index]);
-            }
-        }
-        return src;
-    }
-
-    public static double[][] encode(double[][] src) {
-        // TODO fix the +1 to length; very hacky
-        double[][] encoded_matrix = new double[src.length][src[0].length+1];
-        for (int column_index = 0; column_index < src[0].length; column_index++) {
-            for (int row_index = 0; row_index < src.length; row_index++) {
-                // Convert the double to an int for categorization
-                int element = (int) src[row_index][column_index];
-                double[] encoded_array = eq.encode(element);
-                encoded_matrix[row_index][column_index] = encoded_array[0];
-                encoded_matrix[row_index][column_index+1] = encoded_array[1];
-
-                // Put into hashtable when we decode
-                encoded_arrays.put(row_index, encoded_array);
-            }
-        }
-        return encoded_matrix;
-    }
 
     public static void init() throws IOException {
         MLoader mLoader = new MLoader("/Users/masonnakamura/IdeaProjects/MasonzJavaNeural/data/train-images.idx3-ubyte",
@@ -122,126 +80,16 @@ public class MasonzMTraining {
         assert (TRAINING_IDEALS[0].length == (10 - 1));
     }
 
-    public static void report(String input_type, double[][] inputs, String input_string) {
-        if (input_string.equals("inputs")) {
-            System.out.println("--- " + input_type + " inputs");
-            for (int id = 0; id < normalizers.size(); id++) {
-                if (id == 0) {
-                    System.out.println("SL: " + normalizers.get(0).getActualLow() + " - " + normalizers.get(0).getActualHigh());
-                } else if (id == 1) {
-                    System.out.println("SW: " + normalizers.get(1).getActualLow() + " - " + normalizers.get(1).getActualHigh());
-                } else if (id == 2) {
-                    System.out.println("PL: " + normalizers.get(2).getActualLow() + " - " + normalizers.get(2).getActualHigh());
-                } else {
-                    System.out.println("PW: " + normalizers.get(3).getActualLow() + " - " + normalizers.get(3).getActualHigh());
-                }
-            }
-
-            DecimalFormat f = new DecimalFormat("##.00");
-            System.out.println("#  |" + String.format("%-14s|", "SL") + String.format("%-14s|", "SW") +
-                    String.format("%-14s|", "PL") + String.format("%-14s|", "PW"));
-
-            for (int row_index = 0; row_index < inputs.length; row_index++) {
-                System.out.print(String.format("%-3s|", row_index));
-                for (int column_index = 0; column_index < inputs[0].length; column_index++) {
-                    System.out.print(String.format("%-14s|", f.format(normalizers.get(column_index).deNormalize(inputs[row_index][column_index])) + " -> "
-                            + f.format(inputs[row_index][column_index])));
-                }
-                System.out.println();
-            }
-        }
-
-        else if (input_string.equals("outputs")){
-            System.out.println("--- " + input_type + " outputs");
-            System.out.print("#   ");
-            for (int id = 1; id < inputs[0].length+1; id++) {
-                System.out.print(String.format("%-8s", "t" + id));
-            }
-
-            System.out.print(String.format("%-8s", "decoding"));
-            System.out.println();
-
-            DecimalFormat f = new DecimalFormat("#0.0000");
-
-            for (int row_index = 0; row_index < inputs.length; row_index++) {
-                System.out.print(String.format("%-4s", row_index));
-
-                for (int column_index = 0; column_index < inputs[0].length; column_index++) {
-                    System.out.print(String.format("%-8s", f.format(encoded_arrays.get(row_index)[column_index])));
-                }
-
-                int decoded_int = eq.decode(encoded_arrays.get(row_index));
-                System.out.print(" " + decoded_int);
-
-                switch (decoded_int) {
-                    case (0) -> System.out.print(" -> setosa");
-                    case (1) -> System.out.print(" -> virginica");
-                    case (2) -> System.out.print(" -> versicolor");
-                }
-                System.out.println();
-            }
-        }
-
-        else if (input_string.equals("network results")){
-            System.out.println("Network Results:");
-            System.out.println("#   " + String.format("%-8s", "Ideal") + String.format("%-8s", "Actual"));
-
-        }
-
-        else {
-            System.out.println("Invalid input_string");
-        }
-
-    }
-
-    public static void network_report(MLDataSet testingSet, BasicNetwork network){
-        System.out.println("Network results:");
-
-        System.out.println(String.format("%4s","#") + String.format("%13s", "Ideal") + String.format("%12s", "Actual"));
-
-        // Report inputs and ideals vs. outputs.
-        int n = 1;
-        // initialize the error for misses
-        int error = 0;
-        for (MLDataPair pair : testingSet) {
-            System.out.printf("%4d ",n);
-
-            final MLData inputs = pair.getInput();
-            final MLData outputs = network.compute(inputs);
-
-            final MLData ideals = pair.getIdeal();
-            final double ideal[] = ideals.getData();
-            final double actual[] = outputs.getData();
-
-            int cat_ideal = eq.decode(ideal);
-            int cat_actual = eq.decode(actual);
-
-            System.out.printf("%12s", IrisHelper.cat2Species.get(cat_ideal));
-            System.out.printf("%12s", IrisHelper.cat2Species.get(cat_actual));
-
-            // Check if the ideal and the actual are different
-            if (cat_ideal != cat_actual){
-                System.out.print(String.format("%8s","MISSED!"));
-                error += 1;
-            }
-
-            System.out.println();
-
-            n += 1;
-        }
-
-        System.out.println("...");
-        DecimalFormat f = new DecimalFormat("###.#");
-        System.out.println(String.format("success rate = " + (30-error) + "/30 " + (float)(30-error)/30 + "%%"));
-    }
-
-
 
     /**
      * The main method.
      * @param args No arguments are used.
      */
     public static void main(final String args[]) throws IOException {
+        // Get the start date and time
+        java.util.Date start_date = new java.util.Date();
+        System.out.println("started: " + start_date);
+
         init();
 
         // Instantiate the network
@@ -319,6 +167,12 @@ public class MasonzMTraining {
         training.finishTraining();
 
         EncogHelper.log(epoch, error,sameCount > MAX_SAME_COUNT, true);
+
+        MExercise mExercise = new MExercise(network, trainingSet);
+        mExercise.report();
+
+        java.util.Date end_date = new java.util.Date();
+        System.out.println("finished :" + end_date);
 //        EncogHelper.report(trainingSet, network);
 //        EncogHelper.describe(network);
 //
@@ -327,6 +181,6 @@ public class MasonzMTraining {
 //        // Testing network on testing data
 ////        EncogHelper.report(testingSet, network);
 //        network_report(testingSet, network);
-//        Encog.getInstance().shutdown();
+        Encog.getInstance().shutdown();
     }
 }
